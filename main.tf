@@ -42,7 +42,7 @@ resource "aws_security_group" "default" {
   vpc_id      = aws_vpc.main.id
 
   dynamic "ingress" {
-    for_each = [for rule in var.sg_rules : rule if rule.type == "ingress"]
+    for_each = [for rule in local.sg_rules : rule if rule.type == "ingress"]
     content {
       from_port   = ingress.value.from_port
       to_port     = ingress.value.to_port
@@ -53,7 +53,7 @@ resource "aws_security_group" "default" {
   }
 
   dynamic "egress" {
-    for_each = [for rule in var.sg_rules : rule if rule.type == "egress"]
+    for_each = [for rule in local.sg_rules : rule if rule.type == "egress"]
     content {
       from_port   = egress.value.from_port
       to_port     = egress.value.to_port
@@ -64,9 +64,8 @@ resource "aws_security_group" "default" {
   }
 }
 
-output "security_group_id" {
-  value = aws_security_group.default.id
-}
+
+
 
 locals {
   sg_rules = [
@@ -78,7 +77,6 @@ locals {
       cidr_blocks = ["0.0.0.0/0"]
       description = "SSH"
     },
-
     {
       type        = "ingress"
       from_port   = 80
@@ -99,7 +97,7 @@ locals {
       type        = "egress"
       from_port   = 0
       to_port     = 0
-      protocol    = "-1"
+      protocol    = "-1"  # Allow all protocols
       cidr_blocks = ["0.0.0.0/0"]
       description = "All traffic"
     }
@@ -112,7 +110,7 @@ resource "aws_instance" "server" {
   key_name      = aws_key_pair.deployer.key_name
 
   subnet_id              = aws_subnet.main.id
-  vpc_security_group_ids = [aws_security_group.security_group_id]
+  vpc_security_group_ids = [aws_security_group.default.id]
 
   user_data = <<-EOF
               #!/bin/bash
@@ -127,3 +125,40 @@ resource "aws_instance" "server" {
     Name = join("-", [var.prefix, "ec2"])
   }
 }
+
+resource "aws_internet_gateway" "main" {
+  vpc_id = aws_vpc.main.id
+
+  tags = {
+    Name = join("-", [var.prefix, "igw"])
+  }
+}
+
+resource "aws_eip" "lb" {
+  instance = aws_instance.server.id
+  domain   = "vpc"
+}
+
+
+resource "aws_route_table" "main" {
+  vpc_id = aws_vpc.main.id
+
+  route {
+    cidr_block = "0.0.0.0/0"
+    gateway_id = aws_internet_gateway.main.id
+  }
+
+
+  tags = {
+     Name = join("-", [var.prefix, "route-table"])
+  }
+}
+
+resource "aws_route_table_association" "a" {
+  subnet_id      = aws_subnet.main.id
+  route_table_id = aws_route_table.main.id
+}
+
+
+
+
