@@ -97,7 +97,7 @@ locals {
       type        = "egress"
       from_port   = 0
       to_port     = 0
-      protocol    = "-1"  # Allow all protocols
+      protocol    = "-1" # Allow all protocols
       cidr_blocks = ["0.0.0.0/0"]
       description = "All traffic"
     }
@@ -150,7 +150,7 @@ resource "aws_route_table" "main" {
 
 
   tags = {
-     Name = join("-", [var.prefix, "route-table"])
+    Name = join("-", [var.prefix, "route-table"])
   }
 }
 
