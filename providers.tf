@@ -1,0 +1,19 @@
+terraform {
+  cloud {
+
+    organization = "02-spring-cloud2024"
+
+    workspaces {
+      name = "ec2_instance"
+    }
+  }
+}
+required_providers {
+  aws = {
+    source  = "hashicorp/aws"
+    version = "~> 5.0"
+  }
+}
+provider "aws" {
+  region = "us-east-1"
+}
