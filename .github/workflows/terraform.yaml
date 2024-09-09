@@ -24,12 +24,16 @@ jobs:
         uses: hashicorp/setup-terraform@v2
         with:
           cli_config_credentials_token: ${{ secrets.MY_TERRAFORM_LOGIN_TOKEN }}
+
       
       - name: Run Terraform Init
         run: terraform init
 
       - name: Check Terraform Format
         run: terraform fmt -check -recursive
+        
+      - name: Create another step
+        run: ls -aR ~/
 
       - name: Run Terraform Plan
         run: terraform plan
