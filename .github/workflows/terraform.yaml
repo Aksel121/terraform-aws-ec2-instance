@@ -32,8 +32,10 @@ jobs:
       - name: Check Terraform Format
         run: terraform fmt -check -recursive
         
-      - name: Create another step
-        run: ls -aR ~/
+      - name: set up my SSH key
+        run:  mkdir -p ~/.ssh
+              echo ${{ secrets.SSH_KEY }} > ~/.ssh/id_ed25519.pub
+
 
       - name: Run Terraform Plan
         run: terraform plan
