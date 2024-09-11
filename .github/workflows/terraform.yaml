@@ -19,6 +19,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+
+      - name: set up my SSH key
+        run:  mkdir -p ~/.ssh
+              echo ${{ secrets.SSH_KEY }} > ~/.ssh/id_ed25519.pub
       
       - name: My First Terraform Setup
         uses: hashicorp/setup-terraform@v2
@@ -32,11 +36,7 @@ jobs:
       - name: Check Terraform Format
         run: terraform fmt -check -recursive
         
-      - name: set up my SSH key
-        run:  mkdir -p ~/.ssh
-              echo ${{ secrets.SSH_KEY }} > ~/.ssh/id_ed25519.pub
-
-
+    
       - name: Run Terraform Plan
         run: terraform plan
 

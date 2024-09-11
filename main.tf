@@ -104,12 +104,29 @@ locals {
   ]
 }
 
-resource "aws_instance" "server" {
-  ami           = "ami-066784287e358dad1"
-  instance_type = "t2.micro"
-  key_name      = aws_key_pair.deployer.key_name
 
-  subnet_id              = aws_subnet.main.id
+
+
+
+resource "aws_internet_gateway" "main" {
+  vpc_id = aws_vpc.main.id
+
+  tags = {
+    Name = join("-", [var.prefix, "igw"])
+  }
+}
+
+variable "instance_count" {
+  type    = number
+  default = 3
+}
+
+resource "aws_instance" "server" {
+  for_each       = { for i in range(var.instance_count) : i => i }
+  ami            = "ami-066784287e358dad1"
+  instance_type  = "t2.micro"
+  key_name       = aws_key_pair.deployer.key_name
+  subnet_id      = aws_subnet.main.id
   vpc_security_group_ids = [aws_security_group.default.id]
 
   user_data = <<-EOF
@@ -122,22 +139,17 @@ resource "aws_instance" "server" {
               EOF 
 
   tags = {
-    Name = join("-", [var.prefix, "ec2"])
-  }
-}
-
-resource "aws_internet_gateway" "main" {
-  vpc_id = aws_vpc.main.id
-
-  tags = {
-    Name = join("-", [var.prefix, "igw"])
+    Name = "${var.prefix}-ec2-${each.key}"
   }
 }
 
 resource "aws_eip" "lb" {
-  instance = aws_instance.server.id
+  for_each = aws_instance.server
+  instance = each.value.id
   domain   = "vpc"
 }
+
+
 
 
 resource "aws_route_table" "main" {
