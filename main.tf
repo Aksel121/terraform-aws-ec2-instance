@@ -116,13 +116,19 @@ resource "aws_internet_gateway" "main" {
   }
 }
 
-variable "instance_count" {
-  type    = number
-  default = 3
+
+locals {
+  web_servers = [
+    "bambam",
+    "fred",
+    "wilma"
+  ]
+
+
 }
 
 resource "aws_instance" "server" {
-  for_each               = { for i in range(var.instance_count) : i => i }
+  for_each               = toset(local.web_servers)
   ami                    = "ami-066784287e358dad1"
   instance_type          = "t2.micro"
   key_name               = aws_key_pair.deployer.key_name
@@ -135,7 +141,7 @@ resource "aws_instance" "server" {
               sudo yum install -y httpd
               sudo systemctl start httpd.service
               sudo systemctl enable httpd.service
-              sudo echo "<h1> Hello World from BamBam </h1>" > /var/www/html/index.html                   
+              sudo echo "<h1> Hello World from ${each.key} </h1>" > /var/www/html/index.html                   
               EOF 
 
   tags = {
@@ -171,6 +177,11 @@ resource "aws_route_table_association" "a" {
   route_table_id = aws_route_table.main.id
 }
 
+output "web_server_ip" {
+
+  value = {for instance, value in aws_eip.lb : instance => value.public_ip }
+  
+}
 
 
 
